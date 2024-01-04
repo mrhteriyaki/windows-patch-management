@@ -106,5 +106,11 @@
     </None>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Patch Management\Patch Management.vbproj">
+      <Project>{44e04f57-40b1-4797-b464-8abb72fe6eba}</Project>
+      <Name>Patch Management</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

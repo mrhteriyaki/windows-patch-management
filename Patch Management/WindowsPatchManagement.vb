@@ -126,7 +126,7 @@ Public Class WindowsPatchManagement
 
 
 
-    Public Shared Function InstallUpdates(Optional IncludeDrivers As Boolean = False) As Boolean 'Return if shutdown required.
+    Public Shared Function InstallUpdates(Optional IncludeDrivers As Boolean = False, Optional IncludeSoftware As Boolean = True) As Boolean 'Return if shutdown required.
 
 
         Dim updateSession As New UpdateSession
@@ -155,28 +155,32 @@ Public Class WindowsPatchManagement
         End If
 
         Console.WriteLine("Pending Updates:")
-        Dim updatesToDownload As New UpdateCollection
+        Dim updateCol As New UpdateCollection
         For I = 0 To searchResult.Updates.Count - 1
             Dim update As IUpdate = searchResult.Updates.Item(I)
-
-            If update.Type = 2 And IncludeDrivers Then
+            If update.Type = UpdateType.utDriver And IncludeDrivers Then
                 'Only install drivers if requested.
                 Console.WriteLine("Driver: " & update.Title)
-                updatesToDownload.Add(update)
-            ElseIf Not update.Type = 2 Then
-                'Install all other updates.
-                Console.WriteLine(update.Title)
-                updatesToDownload.Add(update)
+                updateCol.Add(update)
+            ElseIf update.Type = UpdateType.utSoftware And IncludeSoftware Then
+                'Install software updates unless excluded.
+                Console.WriteLine("Software:" & update.Title)
+                updateCol.Add(update)
             End If
 
         Next
         Console.WriteLine()
 
-        'Download updates.
-        Console.WriteLine(vbCrLf & "Downloading updates.")
+        If updateCol.Count = 0 Then
+            'No Updates for installation, skip remaining.
+            Console.WriteLine("No updates available.")
+            Return False
+        End If
 
+        'Download Updates.
+        Console.WriteLine(vbCrLf & "Downloading updates.")
         Dim downloader As UpdateDownloader = updateSession.CreateUpdateDownloader()
-        downloader.Updates = updatesToDownload
+        downloader.Updates = updateCol
         downloader.Download()
 
         'Console.WriteLine(vbCrLf & "List of downloaded updates:")
@@ -188,27 +192,11 @@ Public Class WindowsPatchManagement
         'Next
 
 
-        'Install updates.
-        Console.WriteLine("Generating Install List")
-        Dim updatesToInstall As New UpdateCollection '= CreateObject("Microsoft.Update.UpdateColl")
-        For I = 0 To searchResult.Updates.Count - 1
-            Dim update As IUpdate = searchResult.Updates.Item(I)
-            Try
-                'If update.IsDownloaded = True Then
-                updatesToInstall.Add(update)
-                'End If
-
-                'Some updates return null on isdownloaded, skip download check.
-            Catch ex As Exception
-                Console.WriteLine("Error adding update to installation list. Index:" & I & ", Update Name:" & update.Title & " Error: " & ex.ToString)
-            End Try
-        Next
-
         Console.WriteLine("Creating Update Installer")
         Dim installer As UpdateInstaller = updateSession.CreateUpdateInstaller()
-        installer.Updates = updatesToInstall
+        installer.Updates = updateCol
 
-        Console.WriteLine("Installing " & searchResult.Updates.Count.ToString & " updates, please wait this may take a while.")
+        Console.WriteLine("Installing " & updateCol.Count.ToString & " updates, please wait this may take a while.")
         Dim installationResult As IInstallationResult = installer.Install()
 
         'Output results of install
@@ -216,8 +204,8 @@ Public Class WindowsPatchManagement
         Console.WriteLine("Reboot Required: " & installationResult.RebootRequired & vbCrLf)
         Console.WriteLine("Listing of updates installed and individual installation results:")
 
-        For I = 0 To updatesToInstall.Count - 1
-            Console.WriteLine(I + 1 & "> " & updatesToInstall.Item(I).Title & ": " & installationResult.GetUpdateResult(I).ResultCode)
+        For I = 0 To updateCol.Count - 1
+            Console.WriteLine(I + 1 & "> " & updateCol.Item(I).Title & ": " & installationResult.GetUpdateResult(I).ResultCode)
         Next
 
         If installationResult.RebootRequired = True Then
