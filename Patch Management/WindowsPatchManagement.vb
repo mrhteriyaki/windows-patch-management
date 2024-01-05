@@ -32,7 +32,6 @@ Public Class WindowsPatchManagement
         Public Revision As String
         <JsonProperty(PropertyName:="category")>
         Public Category As String
-
     End Class
 
     Public Class WUpdate
@@ -140,7 +139,16 @@ Public Class WindowsPatchManagement
         'IUpdate Type integer values are 1 = Software, 2 = Driver.
         'https://learn.microsoft.com/en-us/windows/win32/api/wuapi/ne-wuapi-updatetype
 
-        Console.WriteLine("Searching for Updates.")
+        Console.Write("Searching for updates to ")
+        If IncludeDrivers And IncludeSoftware Then
+            Console.Write("drivers and windows.")
+        ElseIf IncludeDrivers Then
+            Console.Write("drivers.")
+        ElseIf IncludeSoftware Then
+            Console.Write("windows.")
+        End If
+        Console.WriteLine()
+
         Dim searchResult As ISearchResult
         Try
             searchResult = updateSearcher.Search("IsInstalled=0 And IsHidden=0")
