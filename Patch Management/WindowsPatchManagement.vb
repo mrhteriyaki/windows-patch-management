@@ -213,7 +213,13 @@ Public Class WindowsPatchManagement
         Console.WriteLine("Listing of updates installed and individual installation results:")
 
         For I = 0 To updateCol.Count - 1
-            Console.WriteLine(I + 1 & "> " & updateCol.Item(I).Title & ": " & installationResult.GetUpdateResult(I).ResultCode)
+            Dim ResultStr As String = installationResult.GetUpdateResult(I).ResultCode
+            If installationResult.GetUpdateResult(I).ResultCode = 2 Then
+                ResultStr = "Completed (2)"
+            ElseIf installationResult.GetUpdateResult(I).ResultCode = 4 Then
+                ResultStr = "Failed (4)"
+            End If
+            Console.WriteLine(I + 1 & "> " & updateCol.Item(I).Title & ", Result Code: " & ResultStr)
         Next
 
         If installationResult.RebootRequired = True Then
