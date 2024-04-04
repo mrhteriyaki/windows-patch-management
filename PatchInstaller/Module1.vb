@@ -7,19 +7,26 @@ Module Module1
         Try
             Dim DriverInstall As Boolean = False
             Dim RebootApproved As Boolean = False
-            Dim SoftwareUpdates As Boolean = True
+            Dim SoftwareUpdates As Boolean = False
 
+            If args.Count = 0 Then
+                Help()
+                Exit Sub
+            End If
 
             For Each arg In args
                 If arg = "?" Or arg.ToLower = "help" Then
-                    Console.WriteLine("Installs windows updates, use argument 'drivers' to include drivers or 'nosoftware' to exclude regular software updates.")
+                    Help()
                     Exit Sub
-                ElseIf arg = "drivers" Then
+                ElseIf arg = "-drivers" Then
                     DriverInstall = True
-                ElseIf arg = "reboot" Then
+                ElseIf arg = "-reboot" Then
                     RebootApproved = True
-                ElseIf arg = "nosoftware" Then
-                    SoftwareUpdates = False
+                ElseIf arg = "-updates" Then
+                    SoftwareUpdates = True
+                Else
+                    Console.WriteLine("Invalid Argument: " & arg)
+                    Exit Sub
                 End If
             Next
 
@@ -40,8 +47,21 @@ Module Module1
             Environment.ExitCode = 1
         End Try
 
+        'Potential speed improvement using offline database of updates:  wsusscn2.cab
+        'https://stackoverflow.com/questions/27337433/slow-wua-windows-update-api
+
+        'https://support.microsoft.com/en-au/topic/a-new-version-of-the-windows-update-offline-scan-file-wsusscn2-cab-is-available-for-advanced-users-fe433f4d-44f4-28e3-88c5-5b22329c0a08
 
 
+    End Sub
+
+    Sub Help()
+        Console.WriteLine("Patch Installer - Mitchell Hayden")
+        Console.WriteLine("Installs windows updates.")
+        Console.WriteLine("Arguments available:")
+        Console.WriteLine("-updates     Include Windows Software Updates.")
+        Console.WriteLine("-drivers     Include Hardware driver updates.")
+        Console.WriteLine("-reboot      Reboot if required when updates completed.")
     End Sub
 
 End Module
