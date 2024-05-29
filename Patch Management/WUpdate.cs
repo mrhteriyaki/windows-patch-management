@@ -31,7 +31,7 @@ namespace Patch_Management
             for (int I = 0, loopTo = (searchResult.Updates.Count - 1); I <= loopTo; I++)
             {
                 IUpdate update = (IUpdate)(searchResult).Updates[I];
-                Console.WriteLine(update.Title);
+                Console.WriteLine(I.ToString() + ": " + update.Title);
                 
             }
         }
