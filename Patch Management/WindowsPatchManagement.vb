@@ -32,6 +32,8 @@ Public Class WindowsPatchManagement
         Public Revision As String
         <JsonProperty(PropertyName:="category")>
         Public Category As String
+        <JsonProperty(PropertyName:="result")>
+        Public InstallResult As Integer
     End Class
 
     Public Class WUpdate
@@ -57,6 +59,7 @@ Public Class WindowsPatchManagement
         Dim UpdateCount As Integer = updateSession.CreateupdateSearcher().GetTotalHistoryCount
         Dim searchResult As Object = updateSearcher.QueryHistory(0, UpdateCount)
 
+        'Search result object api doc: https://learn.microsoft.com/en-us/windows/win32/api/wuapi/nn-wuapi-iupdatehistoryentry
 
         Dim WHistory As New List(Of WUpdateHistory)
         For I = 0 To searchResult.Count - 1
@@ -65,6 +68,7 @@ Public Class WindowsPatchManagement
             tWUpdateHistory.Title = update.Title
             tWUpdateHistory.InstallDate = DateTime.Parse(update.Date).ToString("yyyy-MM-dd HH:mm:ss") 'format for SQL.
             tWUpdateHistory.Description = update.Description
+            tWUpdateHistory.InstallResult = update.HResult
 
             Dim UpdateIdentity As Object = update.UpdateIdentity
             tWUpdateHistory.Revision = UpdateIdentity.RevisionNumber
@@ -229,5 +233,34 @@ Public Class WindowsPatchManagement
     End Function
 
 
+
+    Public Shared Function GetHCODEDescription(ByVal HResult As Integer) As String
+        Dim HST As String = HResult.ToString("X")
+
+        If HST.Equals("0") Then
+            Return "Operation successful"
+        ElseIf HST.Equals("80004004") Then
+            Return "Operation aborted"
+        ElseIf HST.Equals("80070005") Then
+            Return "General access denied error"
+        ElseIf HST.Equals("80004005") Then
+            Return "Unspecified failure"
+        ElseIf HST.Equals("80070006") Then
+            Return "Handle that is not valid"
+        ElseIf HST.Equals("80070057") Then
+            Return "One or more arguments are not valid"
+        ElseIf HST.Equals("80004002") Then
+            Return "No such interface supported"
+        ElseIf HST.Equals("80004001") Then
+            Return "Not implemented"
+        ElseIf HST.Equals("8007000E") Then
+            Return "Failed to allocate necessary memory"
+        ElseIf HST.Equals("80004003") Then
+            Return "Pointer that is not valid"
+        ElseIf HST.Equals("8000FFFF") Then
+            Return "Unexpected failure"
+        End If
+        Return ""
+    End Function
 
 End Class

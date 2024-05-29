@@ -1,4 +1,5 @@
 ﻿Imports System.Runtime.CompilerServices
+Imports Patch_Management
 Imports Patch_Management.WindowsPatchManagement
 
 Module Module1
@@ -24,6 +25,12 @@ Module Module1
                     RebootApproved = True
                 ElseIf arg = "-updates" Then
                     SoftwareUpdates = True
+                ElseIf arg.Equals("history") Then
+                    Console.WriteLine("Install Date,HResult Code,HResult Description,Revision,Category,Title,Description")
+                    For Each WUpdate In GetUpdateHistory()
+                        Console.WriteLine(WUpdate.InstallDate & "," & WUpdate.InstallResult.ToString("X") & "," & WindowsPatchManagement.GetHCODEDescription(WUpdate.InstallResult) & "," & WUpdate.Revision & "," & WUpdate.Category & "," & WUpdate.Title & "," & WUpdate.Description)
+                    Next
+                    Exit Sub
                 Else
                     Console.WriteLine("Invalid Argument: " & arg)
                     Exit Sub
@@ -62,6 +69,7 @@ Module Module1
         Console.WriteLine("-updates     Include Windows Software Updates.")
         Console.WriteLine("-drivers     Include Hardware driver updates.")
         Console.WriteLine("-reboot      Reboot if required when updates completed.")
+        Console.WriteLine("history      Show Windows update history for device.")
     End Sub
 
 End Module
