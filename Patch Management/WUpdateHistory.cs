@@ -38,11 +38,11 @@ namespace Patch_Management
 
             // Search result object api doc: https://learn.microsoft.com/en-us/windows/win32/api/wuapi/nn-wuapi-iupdatehistoryentry
 
-            var WHistory = new List<WUpdateHistory>();
+            List<WUpdateHistory> WHistory = new List<WUpdateHistory>();
             for (int I = 0, loopTo = (searchResult.Count - 1); I <= loopTo; I++)
             {
                 var update = searchResult.Item(I);
-                var tWUpdateHistory = new WUpdateHistory();
+                WUpdateHistory tWUpdateHistory = new WUpdateHistory();
                 tWUpdateHistory.Title = update.Title;
                 DateTime UDT = (DateTime)update.Date;
                 tWUpdateHistory.InstallDate = UDT.ToString("yyyy-MM-dd HH:mm:ss"); // format for SQL.

@@ -6,6 +6,7 @@ using System.Reflection;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using PatchInstaller;
 using WUApiLib;
 
 namespace Patch_Management
@@ -33,6 +34,8 @@ namespace Patch_Management
 
         public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true) // Return if shutdown required.
         {
+            Logging logger = new Logging();
+
             var updateSession = new UpdateSession();
             UpdateSearcher updateSearcher = (UpdateSearcher)updateSession.CreateUpdateSearcher();
             updateSession.ClientApplicationID = "MRH Patch Management"; // appName
@@ -43,21 +46,21 @@ namespace Patch_Management
 
             // IUpdate Type integer values are 1 = Software, 2 = Driver.
             // https://learn.microsoft.com/en-us/windows/win32/api/wuapi/ne-wuapi-updatetype
-
-            Console.Write("Searching for updates to ");
+            
+            string msg = "Searching for updates to ";
             if (IncludeDrivers & IncludeSoftware)
             {
-                Console.Write("drivers and windows.");
+                msg = msg + "drivers and windows.";
             }
             else if (IncludeDrivers)
             {
-                Console.Write("drivers.");
+                msg = msg + "drivers.";
             }
             else if (IncludeSoftware)
             {
-                Console.Write("windows.");
+                msg = msg + "windows.";
             }
-            Console.WriteLine();
+            logger.WriteLine(msg);
 
             ISearchResult searchResult;
             try
@@ -66,31 +69,31 @@ namespace Patch_Management
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error searching for updates. Exception:" + ex.ToString());
+                logger.WriteLine("Error searching for updates. Exception:" + ex.ToString());
                 return false;
             }
 
             if (searchResult.Updates.Count == 0)
             {
-                Console.WriteLine("No Updates available to install.");
+                logger.WriteLine("No Updates available to install.");
                 return false;
             }
 
-            Console.WriteLine("Pending Updates:");
-            var updateCol = new UpdateCollection();
+            logger.WriteLine("Pending Updates:");
+            UpdateCollection updateCol = new UpdateCollection();
             for (int I = 0, loopTo = searchResult.Updates.Count - 1; I <= loopTo; I++)
             {
-                var update = searchResult.Updates[I];
+                IUpdate update = searchResult.Updates[I];
                 if (update.Type == UpdateType.utDriver & IncludeDrivers)
                 {
                     // Only install drivers if requested.
-                    Console.WriteLine("Driver: " + update);
+                    logger.WriteLine("Driver: " + update.Title);
                     updateCol.Add(update);
                 }
                 else if (update.Type == UpdateType.utSoftware & IncludeSoftware)
                 {
                     // Install software updates unless excluded.
-                    Console.WriteLine("Software:" + update);
+                    logger.WriteLine("Software:" + update.Title);
                     updateCol.Add(update);
                 }
 
@@ -100,12 +103,12 @@ namespace Patch_Management
             if (updateCol.Count == 0)
             {
                 // No Updates for installation, skip remaining.
-                Console.WriteLine("No updates available.");
+                logger.WriteLine("No updates available.");
                 return false;
             }
 
             // Download Updates.
-            Console.WriteLine(Constants.vbCrLf + "Downloading updates.");
+            logger.WriteLine("Downloading updates.");
             var downloader = updateSession.CreateUpdateDownloader();
             downloader.Updates = updateCol;
             downloader.Download();
@@ -119,17 +122,17 @@ namespace Patch_Management
             // Next
 
 
-            Console.WriteLine("Creating Update Installer");
+            logger.WriteLine("Creating Update Installer");
             UpdateInstaller installer = (UpdateInstaller)updateSession.CreateUpdateInstaller();
             installer.Updates = updateCol;
 
-            Console.WriteLine("Installing " + updateCol.Count.ToString() + " updates, please wait this may take a while.");
-            var installationResult = installer.Install();
+            logger.WriteLine("Installing " + updateCol.Count.ToString() + " updates, please wait this may take a while.");
+            IInstallationResult installationResult = installer.Install();
 
             // Output results of install
-            Console.WriteLine("Installation Result: " + ((int)installationResult.ResultCode).ToString());
-            Console.WriteLine("Reboot Required: " + installationResult.RebootRequired + Constants.vbCrLf);
-            Console.WriteLine("Listing of updates installed and individual installation results:");
+            logger.WriteLine("Installation Result: " + ((int)installationResult.ResultCode).ToString());
+            logger.WriteLine("Reboot Required: " + installationResult.RebootRequired);
+            logger.WriteLine("Listing of updates installed and individual installation results:");
 
             for (int I = 0, loopTo1 = updateCol.Count - 1; I <= loopTo1; I++)
             {
@@ -142,7 +145,8 @@ namespace Patch_Management
                 {
                     ResultStr = "Failed (4)";
                 }
-                Console.WriteLine(I + 1 + "> " + updateCol[I] + ", Result Code: " + ResultStr);
+                IUpdate update = (IUpdate)updateCol[I];
+                logger.WriteLine(I + 1 + "> " + update.Title + ", Result Code: " + ResultStr);
             }
 
             if (installationResult.RebootRequired == true)

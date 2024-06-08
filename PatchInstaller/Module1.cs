@@ -12,7 +12,6 @@ namespace PatchInstaller
 
         public static void Main(string[] args)
         {
-            WUpdate.DisplayPendingUpdates();
 
             try
             {
