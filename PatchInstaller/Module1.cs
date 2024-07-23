@@ -40,7 +40,7 @@ namespace PatchInstaller
                     {
                         RebootApproved = true;
                     }
-                    else if (arg.Equals("-updates"))
+                    else if (arg.Equals("-update"))
                     {
                         SoftwareUpdates = true;
                     }
@@ -95,7 +95,7 @@ namespace PatchInstaller
             Console.WriteLine("Patch Installer - Mitchell Hayden");
             Console.WriteLine("Installs windows updates.");
             Console.WriteLine("Arguments available:");
-            Console.WriteLine("-updates     Include Windows Software Updates.");
+            Console.WriteLine("-update     Include Windows Software Updates.");
             Console.WriteLine("-drivers     Include Hardware driver updates.");
             Console.WriteLine("-reboot      Reboot if required when updates completed.");
             Console.WriteLine("history      Show Windows update history for device.");
