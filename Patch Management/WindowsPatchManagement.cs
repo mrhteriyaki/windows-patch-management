@@ -30,7 +30,7 @@ namespace Patch_Management
         // Public Shared installer As Object
         // Public Shared installationResult As Object
 
-       
+
 
         public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true) // Return if shutdown required.
         {
@@ -46,7 +46,7 @@ namespace Patch_Management
 
             // IUpdate Type integer values are 1 = Software, 2 = Driver.
             // https://learn.microsoft.com/en-us/windows/win32/api/wuapi/ne-wuapi-updatetype
-            
+
             string msg = "Searching for updates to ";
             if (IncludeDrivers & IncludeSoftware)
             {
@@ -137,13 +137,29 @@ namespace Patch_Management
             for (int I = 0, loopTo1 = updateCol.Count - 1; I <= loopTo1; I++)
             {
                 string ResultStr = ((int)installationResult.GetUpdateResult(I).ResultCode).ToString();
-                if ((int)installationResult.GetUpdateResult(I).ResultCode == 2)
+                if ((int)installationResult.GetUpdateResult(I).ResultCode == 0)
+                {
+                    ResultStr = "Not Started (0)";
+                }
+                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 1)
+                {
+                    ResultStr = "In Progress (1)";
+                }
+                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 2)
                 {
                     ResultStr = "Completed (2)";
+                }
+                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 2)
+                {
+                    ResultStr = "Completed with Error (3)";
                 }
                 else if ((int)installationResult.GetUpdateResult(I).ResultCode == 4)
                 {
                     ResultStr = "Failed (4)";
+                }
+                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 5)
+                {
+                    ResultStr = "Aborted (5)";
                 }
                 IUpdate update = (IUpdate)updateCol[I];
                 logger.WriteLine(I + 1 + "> " + update.Title + ", Result Code: " + ResultStr);
@@ -156,9 +172,9 @@ namespace Patch_Management
             return false;
         }
 
-        
 
-        
+
+
 
     }
 }
