@@ -30,6 +30,40 @@ namespace Patch_Management
         // Public Shared installer As Object
         // Public Shared installationResult As Object
 
+        static readonly string clientName = "MRH Patch Management";
+
+        public static void InstallUpdate(int Index)
+        {
+
+            var updateSession = new UpdateSession();
+            UpdateSearcher updateSearcher = (UpdateSearcher)updateSession.CreateUpdateSearcher();
+            updateSession.ClientApplicationID = clientName;
+
+            ISearchResult searchResult = updateSearcher.Search("IsInstalled=0 And IsHidden=0");
+
+            UpdateCollection updateCol = new UpdateCollection();
+            updateCol.Add(searchResult.Updates[Index]);
+            Console.WriteLine(searchResult.Updates[Index].Title);
+
+            var downloader = updateSession.CreateUpdateDownloader();
+            downloader.Updates = updateCol;
+            downloader.Download();
+
+            UpdateInstaller installer = (UpdateInstaller)updateSession.CreateUpdateInstaller();
+            installer.Updates = updateCol;
+
+            IInstallationResult installationResult = installer.Install();
+
+            // Output results of install
+            Console.WriteLine("Installation Result: " + ResultCode.GetCodeValue((int)installationResult.ResultCode));
+            if(installationResult.RebootRequired)
+            {
+                Console.WriteLine("Restart required to complete install.");
+            }
+            
+
+            
+        }
 
 
         public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true) // Return if shutdown required.
@@ -38,7 +72,7 @@ namespace Patch_Management
 
             var updateSession = new UpdateSession();
             UpdateSearcher updateSearcher = (UpdateSearcher)updateSession.CreateUpdateSearcher();
-            updateSession.ClientApplicationID = "MRH Patch Management"; // appName
+            updateSession.ClientApplicationID = clientName; // appName
 
             // Fetch available updates.
             // Alternate query = IsInstalled=0 and Type='Software'
@@ -136,31 +170,8 @@ namespace Patch_Management
 
             for (int I = 0, loopTo1 = updateCol.Count - 1; I <= loopTo1; I++)
             {
-                string ResultStr = ((int)installationResult.GetUpdateResult(I).ResultCode).ToString();
-                if ((int)installationResult.GetUpdateResult(I).ResultCode == 0)
-                {
-                    ResultStr = "Not Started (0)";
-                }
-                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 1)
-                {
-                    ResultStr = "In Progress (1)";
-                }
-                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 2)
-                {
-                    ResultStr = "Completed (2)";
-                }
-                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 2)
-                {
-                    ResultStr = "Completed with Error (3)";
-                }
-                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 4)
-                {
-                    ResultStr = "Failed (4)";
-                }
-                else if ((int)installationResult.GetUpdateResult(I).ResultCode == 5)
-                {
-                    ResultStr = "Aborted (5)";
-                }
+                string ResultStr = ResultCode.GetCodeValue((int)installationResult.GetUpdateResult(I).ResultCode);
+                
                 IUpdate update = (IUpdate)updateCol[I];
                 logger.WriteLine(I + 1 + "> " + update.Title + ", Result Code: " + ResultStr);
             }

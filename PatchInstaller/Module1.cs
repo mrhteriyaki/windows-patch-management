@@ -25,40 +25,43 @@ namespace PatchInstaller
                 bool RebootApproved = false;
                 bool SoftwareUpdates = false;
 
-                foreach (string arg in args)
+                string arg = args[0];
+                if (arg.Equals("?") | arg.ToLower().Equals("help"))
                 {
-                    if (arg.Equals("?") | arg.ToLower().Equals("help"))
-                    {
-                        Help();
-                        return;
-                    }
-                    else if (arg.Equals("-drivers"))
-                    {
-                        DriverInstall = true;
-                    }
-                    else if (arg.Equals("-reboot"))
-                    {
-                        RebootApproved = true;
-                    }
-                    else if (arg.Equals("-update"))
-                    {
-                        SoftwareUpdates = true;
-                    }
-                    else if (arg.Equals("history"))
-                    {
-                        WUpdateHistory.DisplayHistory();
-                        return;
-                    }
-                    else if (arg.Equals("check"))
-                    {
-                        WUpdate.DisplayPendingUpdates();
-                        return;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid Argument: " + arg);
-                        return;
-                    }
+                    Help();
+                    return;
+                }
+                else if (arg.Equals("-drivers"))
+                {
+                    DriverInstall = true;
+                }
+                else if (arg.Equals("-reboot"))
+                {
+                    RebootApproved = true;
+                }
+                else if (arg.Equals("-update"))
+                {
+                    SoftwareUpdates = true;
+                }
+                else if (arg.Equals("history"))
+                {
+                    WUpdateHistory.DisplayHistory();
+                    return;
+                }
+                else if (arg.Equals("check"))
+                {
+                    WUpdate.DisplayPendingUpdates();
+                    return;
+                }
+                else if (arg.Equals("-select"))
+                {
+                    int index = int.Parse(args[1]);
+                    WindowsPatchManagement.InstallUpdate(index);
+                }
+                else
+                {
+                    Console.WriteLine("Invalid Argument: " + arg);
+                    return;
                 }
 
                 if (InstallUpdates(DriverInstall, SoftwareUpdates))
@@ -98,6 +101,7 @@ namespace PatchInstaller
             Console.WriteLine("-update     Include Windows Software Updates.");
             Console.WriteLine("-drivers     Include Hardware driver updates.");
             Console.WriteLine("-reboot      Reboot if required when updates completed.");
+            Console.WriteLine("-select x    Install single update where X is the index number available in the 'check' list.");
             Console.WriteLine("history      Show Windows update history for device.");
             Console.WriteLine("check      Check for available updates and show list.");
         }
