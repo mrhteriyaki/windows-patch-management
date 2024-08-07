@@ -56,7 +56,7 @@ namespace PatchInstaller
                 else if (arg.Equals("-select"))
                 {
                     int index = int.Parse(args[1]);
-                    WindowsPatchManagement.InstallUpdate(index);
+                    InstallUpdate(index);
                 }
                 else
                 {
