@@ -12,6 +12,7 @@ namespace PatchInstaller
 
         public static void Main(string[] args)
         {
+            //HealthCheck.GetWindowsUpdateLog();
 
             try
             {
