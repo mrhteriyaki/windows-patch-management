@@ -12,7 +12,6 @@ namespace PatchInstaller
 
         public static void Main(string[] args)
         {
-            //HealthCheck.GetWindowsUpdateLog();
 
             try
             {
@@ -44,6 +43,11 @@ namespace PatchInstaller
                 {
                     SoftwareUpdates = true;
                 }
+                else if (arg.Equals("-select"))
+                {
+                    int index = int.Parse(args[1]);
+                    InstallUpdate(index);
+                }
                 else if (arg.Equals("history"))
                 {
                     WUpdateHistory.DisplayHistory();
@@ -54,10 +58,10 @@ namespace PatchInstaller
                     WUpdate.DisplayPendingUpdates();
                     return;
                 }
-                else if (arg.Equals("-select"))
+                else if(arg.Equals("logs"))
                 {
-                    int index = int.Parse(args[1]);
-                    InstallUpdate(index);
+                    HealthCheck.GetWindowsUpdateLog();
+                    return;
                 }
                 else
                 {
@@ -104,7 +108,8 @@ namespace PatchInstaller
             Console.WriteLine("-reboot      Reboot if required when updates completed.");
             Console.WriteLine("-select x    Install single update where X is the index number available in the 'check' list.");
             Console.WriteLine("history      Show Windows update history for device.");
-            Console.WriteLine("check      Check for available updates and show list.");
+            Console.WriteLine("check        Check for available updates and show list.");
+            Console.WriteLine("logs         Show update history logs.");
         }
 
     }

@@ -28,89 +28,76 @@ namespace Patch_Management
         public static void GetWindowsUpdateLog()
         {
             //Get ETL file list.
-            string[] etlfiles = Directory.GetFiles("C:\\Windows\\Logs\\WindowsUpdate", "*.etl",SearchOption.TopDirectoryOnly);
+            string[] etlfiles = Directory.GetFiles("C:\\Windows\\Logs\\WindowsUpdate", "*.etl", SearchOption.TopDirectoryOnly);
+            Array.Sort(etlfiles, StringComparer.OrdinalIgnoreCase);
+
 
             string tmpfolder = "C:\\Windows\\Temp\\PatchManagement";
             if (!Directory.Exists(tmpfolder))
             {
                 Directory.CreateDirectory(tmpfolder);
             }
-            
+
             //Remove any existing xml files.
-            foreach(string file in Directory.GetFiles(tmpfolder,"*.xml"))
+            foreach (string file in Directory.GetFiles(tmpfolder, "*.xml"))
             {
                 File.Delete(file);
             }
 
             //Convert each to XML.
-            foreach(string etlfile in etlfiles)
+            foreach (string etlfile in etlfiles)
             {
                 string filename = Path.GetFileName(etlfile);
                 Process conProc = new Process();
                 conProc.StartInfo.FileName = "C:\\Windows\\System32\\tracerpt.exe";
-                conProc.StartInfo.Arguments = etlfile + " -o " + Path.Combine(tmpfolder,filename) + ".xml -of XML";
+                conProc.StartInfo.Arguments = etlfile + " -o " + Path.Combine(tmpfolder, filename) + ".xml -of XML";
                 conProc.StartInfo.UseShellExecute = false;
                 conProc.StartInfo.RedirectStandardOutput = true;
                 conProc.Start();
                 conProc.WaitForExit();
+
             }
 
 
             //Get Data from Each XML
             //non functional xml parse
-            foreach (string xmlData in Directory.GetFiles(tmpfolder,"*.xml"))
+            foreach (string xmlData in Directory.GetFiles(tmpfolder, "*.xml"))
             {
                 Console.WriteLine(xmlData);
 
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(xmlData);
 
-                XmlSerializer serializer = new XmlSerializer(typeof(Events));
+                
+                XmlNamespaceManager nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+                nsmgr.AddNamespace("ns", "http://schemas.microsoft.com/win/2004/08/events/event");
 
-                using (XmlNodeReader nodeReader = new XmlNodeReader(xmlDoc.DocumentElement))
+                XmlNodeList eventNodes = xmlDoc.SelectNodes("//ns:Event", nsmgr);
+                
+                foreach (XmlNode eventNode in eventNodes)
                 {
-                    Events events = (Events)serializer.Deserialize(nodeReader);
-                    foreach (var eventLog in events.EventList)
+                    XmlNode systemNode = eventNode.SelectSingleNode("ns:System",nsmgr);
+                    XmlNode timeNode = systemNode.SelectSingleNode("ns:TimeCreated",nsmgr);
+                    
+                    Console.Write(timeNode.Attributes["SystemTime"].Value);
+                    Console.Write(" ");
+
+                    XmlNode EventDataNode = eventNode.SelectSingleNode("ns:EventData", nsmgr);
+                    if(EventDataNode != null)
                     {
-                        Console.WriteLine($"Data: {eventLog.EventData.Data.Value}");
+                        XmlNodeList dataNodes = EventDataNode.SelectNodes("ns:Data", nsmgr);
+                        foreach (XmlNode dataNode in dataNodes)
+                        {
+                            if (dataNode.Attributes["Name"].Value.Equals("Info"))
+                            {
+                                Console.Write(dataNode.InnerText);
+                            }
+                        }
                     }
+                    
                 }
 
             }
-            
-
-        }
-
-
-        [XmlRoot("Events")]
-        public class Events
-        {
-            [XmlElement("Event")]
-            public List<EventLog> EventList { get; set; }
-        }
-
-
-
-        public class EventLog
-        {
-            [XmlElement("EventData")]
-            public EventData EventData { get; set; }
-
-        }
-
-        public class EventData
-        {
-            [XmlElement("Data")]
-            public Data Data { get; set; }
-        }
-
-        public class Data
-        {
-            [XmlAttribute("Name")]
-            public string Name { get; set; }
-
-            [XmlText]
-            public string Value { get; set; }
         }
 
     }
