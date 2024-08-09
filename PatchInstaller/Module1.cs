@@ -47,6 +47,7 @@ namespace PatchInstaller
                 {
                     int index = int.Parse(args[1]);
                     InstallUpdate(index);
+                    return;
                 }
                 else if (arg.Equals("history"))
                 {
@@ -58,9 +59,9 @@ namespace PatchInstaller
                     WUpdate.DisplayPendingUpdates();
                     return;
                 }
-                else if(arg.Equals("logs"))
+                else if(arg.Equals("health"))
                 {
-                    HealthCheck.GetWindowsUpdateLog();
+                    HealthCheck.GetWindowsUpdateLog("C:\\Windows\\Temp\\PatchManagement\\WindowsUpdate.log");                   
                     return;
                 }
                 else
@@ -101,15 +102,17 @@ namespace PatchInstaller
         static void Help()
         {
             Console.WriteLine("Patch Installer - Mitchell Hayden");
-            Console.WriteLine("Installs windows updates.");
-            Console.WriteLine("Arguments available:");
-            Console.WriteLine("-update     Include Windows Software Updates.");
+            Console.WriteLine("Install parameters available:");
+            Console.WriteLine("-update      Include Windows Software Updates.");
             Console.WriteLine("-drivers     Include Hardware driver updates.");
             Console.WriteLine("-reboot      Reboot if required when updates completed.");
             Console.WriteLine("-select x    Install single update where X is the index number available in the 'check' list.");
+
+            Console.WriteLine();
+            Console.WriteLine("Reporting commands available:");
             Console.WriteLine("history      Show Windows update history for device.");
             Console.WriteLine("check        Check for available updates and show list.");
-            Console.WriteLine("logs         Show update history logs.");
+            Console.WriteLine("health       Writes windows update logs and checks for errors.");
         }
 
     }
