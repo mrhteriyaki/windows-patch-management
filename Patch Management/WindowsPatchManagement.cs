@@ -2,7 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
+using System.Threading;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -56,13 +58,13 @@ namespace Patch_Management
 
             // Output results of install
             Console.WriteLine("Installation Result: " + ResultCode.GetCodeValue((int)installationResult.ResultCode));
-            if(installationResult.RebootRequired)
+            if (installationResult.RebootRequired)
             {
                 Console.WriteLine("Restart required to complete install.");
             }
-            
 
-            
+
+
         }
 
 
@@ -143,9 +145,24 @@ namespace Patch_Management
 
             // Download Updates.
             logger.WriteLine("Downloading updates.");
-            var downloader = updateSession.CreateUpdateDownloader();
+            UpdateDownloader downloader = updateSession.CreateUpdateDownloader();
             downloader.Updates = updateCol;
-            downloader.Download();
+
+            object progressObj = new object();
+            object completeObj = new object();
+            object stateObj = new object();
+            IDownloadJob downloadJob = downloader.BeginDownload(progressObj, completeObj, stateObj);
+
+
+            //IDownloadJob downloadJob = iUpdateDownloader.BeginDownload(new iUpdateDownloader_onProgressChanged(this), new iUpdateDownloader_onCompleted(this), new iUpdateDownloader_state(this))
+
+            while (downloadJob.IsCompleted == false)
+            {
+                Console.Write($"\rDownload progress: {downloadJob.GetProgress().PercentComplete}%");
+                Thread.Sleep(1000); // Wait for 5 seconds before checking again
+            }
+            Console.WriteLine("\rDownload Complete: 100%"); 
+            Console.WriteLine();
 
             // Console.WriteLine(vbCrLf & "List of downloaded updates:")
             // For I = 0 To searchResult.Updates.Count - 1
@@ -161,6 +178,7 @@ namespace Patch_Management
             installer.Updates = updateCol;
 
             logger.WriteLine("Installing " + updateCol.Count.ToString() + " updates, please wait this may take a while.");
+            
             IInstallationResult installationResult = installer.Install();
 
             // Output results of install
@@ -171,7 +189,7 @@ namespace Patch_Management
             for (int I = 0, loopTo1 = updateCol.Count - 1; I <= loopTo1; I++)
             {
                 string ResultStr = ResultCode.GetCodeValue((int)installationResult.GetUpdateResult(I).ResultCode);
-                
+
                 IUpdate update = (IUpdate)updateCol[I];
                 logger.WriteLine(I + 1 + "> " + update.Title + ", Result Code: " + ResultStr);
             }
@@ -183,9 +201,7 @@ namespace Patch_Management
             return false;
         }
 
+       
 
-
-
-
-    }
+    } //end of class.
 }

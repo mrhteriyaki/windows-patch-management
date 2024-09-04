@@ -21,53 +21,66 @@ namespace PatchInstaller
                     return;
                 }
 
+                Console.WriteLine("Patch Management - Mitchell Hayden");
+
                 bool DriverInstall = false;
                 bool RebootApproved = false;
                 bool SoftwareUpdates = false;
 
-                string arg = args[0];
-                if (arg.Equals("?") | arg.ToLower().Equals("help"))
+
+                //Arguments that can be combined.
+                foreach (string arg in args)
                 {
-                    Help();
-                    return;
-                }
-                else if (arg.Equals("-drivers"))
-                {
-                    DriverInstall = true;
-                }
-                else if (arg.Equals("-reboot"))
-                {
-                    RebootApproved = true;
-                }
-                else if (arg.Equals("-update"))
-                {
-                    SoftwareUpdates = true;
-                }
-                else if (arg.Equals("-select"))
-                {
-                    int index = int.Parse(args[1]);
-                    InstallUpdate(index);
-                    return;
-                }
-                else if (arg.Equals("history"))
-                {
-                    WUpdateHistory.DisplayHistory();
-                    return;
-                }
-                else if (arg.Equals("check"))
-                {
-                    WUpdate.DisplayPendingUpdates();
-                    return;
-                }
-                else if(arg.Equals("health"))
-                {
-                    HealthCheck.GetWindowsUpdateLog(@"C:\Windows\Temp\PatchManagement\WindowsUpdate.log");                   
-                    return;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid Argument: " + arg);
-                    return;
+                    //single commands run and execute.
+
+                    if (arg.Equals("?") | arg.ToLower().Equals("help"))
+                    {
+                        Help();
+                        return;
+                    }
+                    else if (arg.Equals("history"))
+                    {
+                        WUpdateHistory.DisplayHistory();
+                        return;
+                    }
+                    else if (arg.Equals("check"))
+                    {
+                        WUpdate.DisplayPendingUpdates();
+                        return;
+                    }
+                    else if (arg.Equals("health"))
+                    {
+                        HealthCheck.GetWindowsUpdateLog(@"C:\Windows\Temp\PatchManagement\WindowsUpdate.log");
+                        return;
+                    }
+
+                    //Combine commands.
+
+                    else if (arg.Equals("-update"))
+                    {
+                        SoftwareUpdates = true;
+                    }
+                    else if (arg.Equals("-drivers"))
+                    {
+                        DriverInstall = true;
+                    }
+                    else if (arg.Equals("-reboot"))
+                    {
+                        RebootApproved = true;
+                    }
+                    else if (arg.Equals("-select"))
+                    {
+                        int index = int.Parse(args[1]);
+                        InstallUpdate(index);
+                        return;
+                    }
+
+                    //Invalid arguments.
+                    else
+                    {
+                        Console.WriteLine("Invalid Argument: " + arg);
+                        return;
+                    }
                 }
 
                 if (RebootManager.CheckPendingRestart())
@@ -78,13 +91,14 @@ namespace PatchInstaller
                 {
                     Console.WriteLine("No pending restarts have been detected.");
                 }
-
+                Console.WriteLine();
 
                 if (InstallUpdates(DriverInstall, SoftwareUpdates))
                 {
                     Console.WriteLine("Reboot required for updates.");
                     if (RebootApproved)
                     {
+                        Console.WriteLine("Restarting System");
                         RebootManager.Restart();
                         return;
                     }
@@ -95,7 +109,7 @@ namespace PatchInstaller
                 }
 
                 //Check for PendingReboot Flags.
-                if(RebootApproved && RebootManager.CheckPendingRestart())
+                if (RebootApproved && RebootManager.CheckPendingRestart())
                 {
                     Console.WriteLine("System is pending reboot - restarting");
                     RebootManager.Restart();
@@ -118,7 +132,7 @@ namespace PatchInstaller
 
         }
 
-       
+
 
         static void Help()
         {

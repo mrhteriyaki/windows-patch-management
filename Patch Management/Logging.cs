@@ -22,7 +22,7 @@ namespace PatchInstaller
 
         public void WriteLine(string Message)
         {
-            string logline = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":" + Message;
+            string logline = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ": " + Message;
             Console.WriteLine(logline);
             StreamWriter sw = new StreamWriter(_filename,true);
             sw.WriteLine(logline);
