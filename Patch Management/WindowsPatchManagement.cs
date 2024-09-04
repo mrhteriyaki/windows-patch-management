@@ -165,7 +165,7 @@ namespace Patch_Management
 
             // Output results of install
             logger.WriteLine("Installation Result: " + ((int)installationResult.ResultCode).ToString());
-            logger.WriteLine("Reboot Required: " + installationResult.RebootRequired);
+            logger.WriteLine("Reboot Required: " + installationResult.RebootRequired.ToString());
             logger.WriteLine("Listing of updates installed and individual installation results:");
 
             for (int I = 0, loopTo1 = updateCol.Count - 1; I <= loopTo1; I++)

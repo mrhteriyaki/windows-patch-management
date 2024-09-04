@@ -61,7 +61,7 @@ namespace PatchInstaller
                 }
                 else if(arg.Equals("health"))
                 {
-                    HealthCheck.GetWindowsUpdateLog("C:\\Windows\\Temp\\PatchManagement\\WindowsUpdate.log");                   
+                    HealthCheck.GetWindowsUpdateLog(@"C:\Windows\Temp\PatchManagement\WindowsUpdate.log");                   
                     return;
                 }
                 else
@@ -70,18 +70,39 @@ namespace PatchInstaller
                     return;
                 }
 
+                if (RebootManager.CheckPendingRestart())
+                {
+                    Console.WriteLine("A pending restart has been detected.");
+                }
+                else
+                {
+                    Console.WriteLine("No pending restarts have been detected.");
+                }
+
+
                 if (InstallUpdates(DriverInstall, SoftwareUpdates))
                 {
                     Console.WriteLine("Reboot required for updates.");
                     if (RebootApproved)
                     {
-                        // Reboot system.
-                        Process rebproc = new();
-                        rebproc.StartInfo.FileName = @"C:\Windows\System32\shutdown.exe";
-                        rebproc.StartInfo.Arguments = "/r /t 1";
-                        rebproc.Start();
+                        RebootManager.Restart();
+                        return;
                     }
                 }
+                else
+                {
+                    Console.WriteLine("Install complete.");
+                }
+
+                //Check for PendingReboot Flags.
+                if(RebootApproved && RebootManager.CheckPendingRestart())
+                {
+                    Console.WriteLine("System is pending reboot - restarting");
+                    RebootManager.Restart();
+                    return;
+                }
+
+
             }
             catch (Exception ex)
             {

@@ -13,6 +13,7 @@ namespace PatchInstaller
         public Logging()
         {
             _filename = @"C:\Windows\Temp\PatchManagement-" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".log";
+            Console.WriteLine("Log file at: " + _filename);
             StreamWriter sw = new StreamWriter(_filename);
             sw.WriteLine("MRH Patch Management - Started");
             sw.Close();
