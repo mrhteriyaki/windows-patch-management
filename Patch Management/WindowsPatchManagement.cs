@@ -68,8 +68,9 @@ namespace Patch_Management
         }
 
 
-        public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true) // Return if shutdown required.
+        public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true, bool IncludePreview = false) // Return if shutdown required.
         {
+
             Logging logger = new Logging();
 
             var updateSession = new UpdateSession();
@@ -96,6 +97,12 @@ namespace Patch_Management
             {
                 msg = msg + "windows.";
             }
+
+            if(!IncludePreview)
+            {
+                msg = msg + " (Excluding preview updates)";
+            }
+
             logger.WriteLine(msg);
 
             ISearchResult searchResult;
@@ -130,9 +137,19 @@ namespace Patch_Management
                 {
                     // Install software updates unless excluded.
                     logger.WriteLine("Software:" + update.Title);
-                    updateCol.Add(update);
+                    if (IncludePreview)
+                    {
+                        updateCol.Add(update);
+                    }
+                    else
+                    {
+                        //Filter out preview updates.
+                        if (!update.Title.ToLower().Contains("preview"))
+                        {
+                            updateCol.Add(update);
+                        }
+                    }
                 }
-
             }
             Console.WriteLine();
 
@@ -161,7 +178,7 @@ namespace Patch_Management
                 Console.Write($"\rDownload progress: {downloadJob.GetProgress().PercentComplete}%");
                 Thread.Sleep(1000); // Wait for 5 seconds before checking again
             }
-            Console.WriteLine("\rDownload Complete: 100%"); 
+            Console.WriteLine("\rDownload Complete: 100%");
             Console.WriteLine();
 
             // Console.WriteLine(vbCrLf & "List of downloaded updates:")
@@ -178,7 +195,7 @@ namespace Patch_Management
             installer.Updates = updateCol;
 
             logger.WriteLine("Installing " + updateCol.Count.ToString() + " updates, please wait this may take a while.");
-            
+
             IInstallationResult installationResult = installer.Install();
 
             // Output results of install
@@ -201,7 +218,7 @@ namespace Patch_Management
             return false;
         }
 
-       
+
 
     } //end of class.
 }
