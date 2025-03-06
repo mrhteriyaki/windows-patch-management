@@ -62,13 +62,10 @@ namespace Patch_Management
             {
                 Console.WriteLine("Restart required to complete install.");
             }
-
-
-
         }
 
 
-        public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true, bool IncludePreview = false) // Return if shutdown required.
+        public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true, bool IncludePreview = false, bool scriptMode = false) // Return if shutdown required.
         {
 
             Logging logger = new Logging();
@@ -98,7 +95,7 @@ namespace Patch_Management
                 msg = msg + "windows.";
             }
 
-            if(!IncludePreview)
+            if (!IncludePreview)
             {
                 msg = msg + " (Excluding preview updates)";
             }
@@ -175,10 +172,16 @@ namespace Patch_Management
 
             while (downloadJob.IsCompleted == false)
             {
-                Console.Write($"\rDownload progress: {downloadJob.GetProgress().PercentComplete}%");
+                if (!scriptMode)
+                {
+                    Console.Write($"\rDownload progress: {downloadJob.GetProgress().PercentComplete}%");
+                }
                 Thread.Sleep(1000); // Wait for 5 seconds before checking again
             }
-            Console.WriteLine("\rDownload Complete: 100%");
+            if (!scriptMode)
+            {
+                Console.WriteLine("\rDownload Complete: 100%");
+            }
             Console.WriteLine();
 
             // Console.WriteLine(vbCrLf & "List of downloaded updates:")

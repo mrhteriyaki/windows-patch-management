@@ -26,7 +26,8 @@ namespace PatchInstaller
                 bool DriverInstall = false;
                 bool RebootApproved = false;
                 bool SoftwareUpdates = false;
-
+                bool PreviewUpdates = false;
+                bool scriptMode = false;
 
                 //Arguments that can be combined.
                 foreach (string arg in args)
@@ -74,6 +75,14 @@ namespace PatchInstaller
                         InstallUpdate(index);
                         return;
                     }
+                    else if(arg.Equals("-preview"))
+                    {
+                        PreviewUpdates = true;
+                    }
+                    else if(arg.Equals("-script"))
+                    {
+                        scriptMode = true;
+                    }
 
                     //Invalid arguments.
                     else
@@ -93,19 +102,23 @@ namespace PatchInstaller
                 }
                 Console.WriteLine();
 
-                if (InstallUpdates(DriverInstall, SoftwareUpdates))
+
+                if(SoftwareUpdates || DriverInstall)
                 {
-                    Console.WriteLine("Reboot required for updates.");
-                    if (RebootApproved)
+                    if (InstallUpdates(DriverInstall, SoftwareUpdates, PreviewUpdates, scriptMode))
                     {
-                        Console.WriteLine("Restarting System");
-                        RebootManager.Restart();
-                        return;
+                        Console.WriteLine("Reboot required for updates.");
+                        if (RebootApproved)
+                        {
+                            Console.WriteLine("Restarting System");
+                            RebootManager.Restart();
+                            return;
+                        }
                     }
-                }
-                else
-                {
-                    Console.WriteLine("Install complete.");
+                    else
+                    {
+                        Console.WriteLine("Install complete.");
+                    }
                 }
 
                 //Check for PendingReboot Flags.
@@ -140,8 +153,10 @@ namespace PatchInstaller
             Console.WriteLine("Install parameters available:");
             Console.WriteLine("-update      Include Windows Software Updates.");
             Console.WriteLine("-drivers     Include Hardware driver updates.");
+            Console.WriteLine("-preview     Include Preview Updates.");
             Console.WriteLine("-reboot      Reboot if required when updates completed.");
             Console.WriteLine("-select x    Install single update where X is the index number available in the 'check' list.");
+            Console.WriteLine("-script      Reduced status info in console output for remote script execution.");
 
             Console.WriteLine();
             Console.WriteLine("Reporting commands available:");
