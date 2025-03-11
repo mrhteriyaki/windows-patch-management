@@ -162,7 +162,7 @@ namespace PatchInstaller
             Console.WriteLine("Reporting commands available:");
             Console.WriteLine("history      Show Windows update history for device.");
             Console.WriteLine("check        Check for available updates and show list.");
-            Console.WriteLine("health       Writes windows update logs and checks for errors.");
+            Console.WriteLine("health       Writes windows update logs to disk and checks for errors.");
         }
 
     }
