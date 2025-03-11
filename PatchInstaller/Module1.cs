@@ -149,7 +149,7 @@ namespace PatchInstaller
 
         static void Help()
         {
-            Console.WriteLine("Patch Installer - Mitchell Hayden");
+            Console.WriteLine("Patch Installer Help");
             Console.WriteLine("Install parameters available:");
             Console.WriteLine("-update      Include Windows Software Updates.");
             Console.WriteLine("-drivers     Include Hardware driver updates.");
