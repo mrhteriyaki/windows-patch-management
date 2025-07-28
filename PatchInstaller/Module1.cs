@@ -10,7 +10,8 @@ namespace PatchInstaller
     static class Module1
     {
 
-        public static void Main(string[] args)
+        static bool InstallErrorsOccured = false;
+        public static int Main(string[] args)
         {
 
             try
@@ -18,7 +19,7 @@ namespace PatchInstaller
                 if (args.Count() == 0)
                 {
                     Help();
-                    return;
+                    return 1;
                 }
 
                 Console.WriteLine("Patch Management - Mitchell Hayden");
@@ -37,22 +38,22 @@ namespace PatchInstaller
                     if (arg.Equals("?") | arg.ToLower().Equals("help"))
                     {
                         Help();
-                        return;
+                        return 0;
                     }
                     else if (arg.Equals("history"))
                     {
                         WUpdateHistory.DisplayHistory();
-                        return;
+                        return 0;
                     }
                     else if (arg.Equals("check"))
                     {
                         WUpdate.DisplayPendingUpdates();
-                        return;
+                        return 0;
                     }
                     else if (arg.Equals("health"))
                     {
                         HealthCheck.GetWindowsUpdateLog(@"C:\Windows\Temp\PatchManagement\WindowsUpdate.log");
-                        return;
+                        return 0;
                     }
 
                     //Combine commands.
@@ -73,22 +74,20 @@ namespace PatchInstaller
                     {
                         int index = int.Parse(args[1]);
                         InstallUpdate(index);
-                        return;
+                        return 0;
                     }
-                    else if(arg.Equals("-preview"))
+                    else if (arg.Equals("-preview"))
                     {
                         PreviewUpdates = true;
                     }
-                    else if(arg.Equals("-script"))
+                    else if (arg.Equals("-script"))
                     {
                         scriptMode = true;
                     }
-
-                    //Invalid arguments.
                     else
                     {
                         Console.WriteLine("Invalid Argument: " + arg);
-                        return;
+                        return 1;
                     }
                 }
 
@@ -103,16 +102,22 @@ namespace PatchInstaller
                 Console.WriteLine();
 
 
-                if(SoftwareUpdates || DriverInstall)
+                if (SoftwareUpdates || DriverInstall)
                 {
-                    if (InstallUpdates(DriverInstall, SoftwareUpdates, PreviewUpdates, scriptMode))
+                    InstallResult IR = InstallUpdates(DriverInstall, SoftwareUpdates, PreviewUpdates, scriptMode);
+                    InstallErrorsOccured = IR.errorsOccured;
+                    if (IR.rebootRequired)
                     {
                         Console.WriteLine("Reboot required for updates.");
                         if (RebootApproved)
                         {
                             Console.WriteLine("Restarting System");
                             RebootManager.Restart();
-                            return;
+                            if (InstallErrorsOccured)
+                            {
+                                return 1;
+                            }
+                            return 0;
                         }
                     }
                     else
@@ -126,23 +131,29 @@ namespace PatchInstaller
                 {
                     Console.WriteLine("System is pending reboot - restarting");
                     RebootManager.Restart();
-                    return;
+                    if (InstallErrorsOccured)
+                    {
+                        return 1;
+                    }
+                    return 0;
                 }
-
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error installing updates: " + ex.ToString());
-                Environment.ExitCode = 1;
+                return 1;
             }
 
             // Potential speed improvement using offline database of updates:  wsusscn2.cab
             // https://stackoverflow.com/questions/27337433/slow-wua-windows-update-api
 
             // https://support.microsoft.com/en-au/topic/a-new-version-of-the-windows-update-offline-scan-file-wsusscn2-cab-is-available-for-advanced-users-fe433f4d-44f4-28e3-88c5-5b22329c0a08
-
-
+            
+            if (InstallErrorsOccured)
+            {
+                return 1;
+            }
+            return 0;
         }
 
 
@@ -163,6 +174,7 @@ namespace PatchInstaller
             Console.WriteLine("history      Show Windows update history for device.");
             Console.WriteLine("check        Check for available updates and show list.");
             Console.WriteLine("health       Writes windows update logs to disk and checks for errors.");
+
         }
 
     }

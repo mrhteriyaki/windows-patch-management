@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,15 +9,10 @@ namespace Patch_Management
 {
     public class WUpdate
     {
-        [JsonProperty(PropertyName = "title")]
         public string Title;
-        [JsonProperty(PropertyName = "type")]
         public int Type; // 1 = Software, 2 = Driver.
-        [JsonProperty(PropertyName = "downloaded")]
         public int Downloaded;
-        [JsonProperty(PropertyName = "product")] // update category name.
         public int Product;
-
 
         public static void DisplayPendingUpdates()
         {
@@ -32,7 +26,6 @@ namespace Patch_Management
             {
                 IUpdate update = (IUpdate)(searchResult).Updates[I];
                 Console.WriteLine(I.ToString() + ": " + update.Title);
-                
             }
         }
     }

@@ -5,9 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
-using Microsoft.VisualBasic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using PatchInstaller;
 using WUApiLib;
 
@@ -64,8 +61,10 @@ namespace Patch_Management
             }
         }
 
+        
 
-        public static bool InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true, bool IncludePreview = false, bool scriptMode = false) // Return if shutdown required.
+
+        public static InstallResult InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true, bool IncludePreview = false, bool scriptMode = false) // Return if shutdown required.
         {
 
             Logging logger = new Logging();
@@ -110,13 +109,13 @@ namespace Patch_Management
             catch (Exception ex)
             {
                 logger.WriteLine("Error searching for updates. Exception:" + ex.ToString());
-                return false;
+                return new InstallResult(false,true);
             }
 
             if (searchResult.Updates.Count == 0)
             {
                 logger.WriteLine("No Updates available to install.");
-                return false;
+                return new InstallResult(false,false);
             }
 
             logger.WriteLine("Pending Updates:");
@@ -154,7 +153,7 @@ namespace Patch_Management
             {
                 // No Updates for installation, skip remaining.
                 logger.WriteLine("No updates available.");
-                return false;
+                return new InstallResult(false,false);
             }
 
             // Download Updates.
@@ -206,19 +205,25 @@ namespace Patch_Management
             logger.WriteLine("Reboot Required: " + installationResult.RebootRequired.ToString());
             logger.WriteLine("Listing of updates installed and individual installation results:");
 
+            bool errorsOccured = false;
             for (int I = 0, loopTo1 = updateCol.Count - 1; I <= loopTo1; I++)
             {
-                string ResultStr = ResultCode.GetCodeValue((int)installationResult.GetUpdateResult(I).ResultCode);
-
+                int resultCode = (int)installationResult.GetUpdateResult(I).ResultCode;
+                if (resultCode == 3 || resultCode == 4)
+                {
+                    errorsOccured = true;
+                }
+                string ResultStr = ResultCode.GetCodeValue(resultCode);
                 IUpdate update = (IUpdate)updateCol[I];
                 logger.WriteLine(I + 1 + "> " + update.Title + ", Result Code: " + ResultStr);
             }
 
+
             if (installationResult.RebootRequired == true)
             {
-                return true;
+                return new InstallResult(true, errorsOccured);
             }
-            return false;
+            return new InstallResult(false, errorsOccured);
         }
 
 

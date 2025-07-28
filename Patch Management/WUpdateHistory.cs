@@ -1,26 +1,20 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace Patch_Management
 {
     public class WUpdateHistory
     {
-        [JsonProperty(PropertyName = "title")]
         public string Title;
-        [JsonProperty(PropertyName = "date")]
         public string InstallDate;
-        [JsonProperty(PropertyName = "description")]
         public string Description;
-        [JsonProperty(PropertyName = "rev")]
         public string Revision;
-        [JsonProperty(PropertyName = "category")]
         public string Category;
-        [JsonProperty(PropertyName = "result")]
         public int InstallResult;
 
         public static List<WUpdateHistory> GetUpdateHistory()
