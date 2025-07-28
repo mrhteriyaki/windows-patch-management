@@ -106,6 +106,10 @@ namespace PatchInstaller
                 {
                     InstallResult IR = InstallUpdates(DriverInstall, SoftwareUpdates, PreviewUpdates, scriptMode);
                     InstallErrorsOccured = IR.errorsOccured;
+                    if(InstallErrorsOccured)
+                    {
+                        Console.WriteLine("Errors occured in the installation process.");
+                    }
                     if (IR.rebootRequired)
                     {
                         Console.WriteLine("Reboot required for updates.");
