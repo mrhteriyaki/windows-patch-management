@@ -66,23 +66,3 @@ namespace PatchInstaller.My
         }
     }
 }
-
-namespace PatchInstaller.My
-{
-
-    [HideModuleName()]
-    [DebuggerNonUserCode()]
-    [System.Runtime.CompilerServices.CompilerGenerated()]
-    internal static class MySettingsProperty
-    {
-
-        [System.ComponentModel.Design.HelpKeyword("My.Settings")]
-        internal static MySettings Settings
-        {
-            get
-            {
-                return MySettings.Default;
-            }
-        }
-    }
-}

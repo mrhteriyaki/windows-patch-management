@@ -25,7 +25,6 @@ namespace PatchInstaller.My.Resources
     [System.CodeDom.Compiler.GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [DebuggerNonUserCode()]
     [System.Runtime.CompilerServices.CompilerGenerated()]
-    [HideModuleName()]
     internal static class Resources
     {
 

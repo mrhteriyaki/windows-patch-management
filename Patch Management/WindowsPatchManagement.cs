@@ -1,11 +1,12 @@
-﻿using System;
+﻿using PatchInstaller;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Threading;
-using PatchInstaller;
 using WUApiLib;
 
 namespace Patch_Management
@@ -30,6 +31,7 @@ namespace Patch_Management
         // Public Shared installationResult As Object
 
         static readonly string clientName = "MRH Patch Management";
+        static bool forceDownload = false;
 
         public static void InstallUpdate(int Index)
         {
@@ -61,45 +63,25 @@ namespace Patch_Management
             }
         }
 
-        
+
+        // Fetch available updates.
+        // Alternate query = IsInstalled=0 and Type='Software'
+        // more info at https://learn.microsoft.com/en-us/windows/win32/api/wuapi/nf-wuapi-iupdatesearcher-search
+
+        // IUpdate Type integer values are 1 = Software, 2 = Driver.
+        // https://learn.microsoft.com/en-us/windows/win32/api/wuapi/ne-wuapi-updatetype
 
 
-        public static InstallResult InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true, bool IncludePreview = false, bool scriptMode = false) // Return if shutdown required.
+        public static InstallResult InstallUpdates(bool IncludeDrivers = false, bool IncludeSoftware = true, bool IncludePreview = false, bool downloadOnly = false, bool scriptMode = false) // Return if shutdown required.
         {
 
             Logging logger = new Logging();
 
             var updateSession = new UpdateSession();
             UpdateSearcher updateSearcher = (UpdateSearcher)updateSession.CreateUpdateSearcher();
-            updateSession.ClientApplicationID = clientName; // appName
+            updateSession.ClientApplicationID = clientName; // appName for Windows Update Logs
 
-            // Fetch available updates.
-            // Alternate query = IsInstalled=0 and Type='Software'
-            // more info at https://learn.microsoft.com/en-us/windows/win32/api/wuapi/nf-wuapi-iupdatesearcher-search
-
-            // IUpdate Type integer values are 1 = Software, 2 = Driver.
-            // https://learn.microsoft.com/en-us/windows/win32/api/wuapi/ne-wuapi-updatetype
-
-            string msg = "Searching for updates to ";
-            if (IncludeDrivers & IncludeSoftware)
-            {
-                msg = msg + "drivers and windows.";
-            }
-            else if (IncludeDrivers)
-            {
-                msg = msg + "drivers.";
-            }
-            else if (IncludeSoftware)
-            {
-                msg = msg + "windows.";
-            }
-
-            if (!IncludePreview)
-            {
-                msg = msg + " (Excluding preview updates)";
-            }
-
-            logger.WriteLine(msg);
+            logger.WriteLine(UserUpdateMessage(IncludeDrivers, IncludeSoftware, IncludePreview));
 
             ISearchResult searchResult;
             try
@@ -109,13 +91,13 @@ namespace Patch_Management
             catch (Exception ex)
             {
                 logger.WriteLine("Error searching for updates. Exception:" + ex.ToString());
-                return new InstallResult(false,true);
+                return new InstallResult(false, true);
             }
 
             if (searchResult.Updates.Count == 0)
             {
                 logger.WriteLine("No Updates available to install.");
-                return new InstallResult(false,false);
+                return new InstallResult(false, false);
             }
 
             logger.WriteLine("Pending Updates:");
@@ -153,35 +135,55 @@ namespace Patch_Management
             {
                 // No Updates for installation, skip remaining.
                 logger.WriteLine("No updates available.");
-                return new InstallResult(false,false);
+                return new InstallResult(false, false);
             }
 
             // Download Updates.
             logger.WriteLine("Downloading updates.");
             UpdateDownloader downloader = updateSession.CreateUpdateDownloader();
-            downloader.Updates = updateCol;
-
-            object progressObj = new object();
-            object completeObj = new object();
-            object stateObj = new object();
-            IDownloadJob downloadJob = downloader.BeginDownload(progressObj, completeObj, stateObj);
-
-
-            //IDownloadJob downloadJob = iUpdateDownloader.BeginDownload(new iUpdateDownloader_onProgressChanged(this), new iUpdateDownloader_onCompleted(this), new iUpdateDownloader_state(this))
-
-            while (downloadJob.IsCompleted == false)
+            UpdateCollection downloadUpdateCol = new UpdateCollection();
+            foreach (IUpdate tmpUpdate in updateCol)
             {
+                if (tmpUpdate.IsDownloaded && !forceDownload)
+                {
+                    logger.WriteLine("Already downloaded: " + tmpUpdate.Title); 
+                }
+                else
+                {
+                    downloadUpdateCol.Add(tmpUpdate);
+                    logger.WriteLine("Queuing download: " + tmpUpdate.Title);
+                }
+            }
+
+            downloader.Updates = downloadUpdateCol;
+
+            if (downloadUpdateCol.Count > 0)
+            {
+                object progressObj = new object();
+                object completeObj = new object();
+                object stateObj = new object();
+                IDownloadJob downloadJob = downloader.BeginDownload(progressObj, completeObj, stateObj);
+                //IDownloadJob downloadJob = iUpdateDownloader.BeginDownload(new iUpdateDownloader_onProgressChanged(this), new iUpdateDownloader_onCompleted(this), new iUpdateDownloader_state(this))
+
+                while (downloadJob.IsCompleted == false)
+                {
+                    if (!scriptMode)
+                    {
+                        Console.Write($"\rDownload progress: {downloadJob.GetProgress().PercentComplete}%");
+                    }
+                    Thread.Sleep(1000); // Wait for 5 seconds before checking again
+                }
                 if (!scriptMode)
                 {
-                    Console.Write($"\rDownload progress: {downloadJob.GetProgress().PercentComplete}%");
+                    Console.WriteLine("\rDownload Complete: 100%");
                 }
-                Thread.Sleep(1000); // Wait for 5 seconds before checking again
+                Console.WriteLine();
             }
-            if (!scriptMode)
+
+            if (downloadOnly)
             {
-                Console.WriteLine("\rDownload Complete: 100%");
+                return new InstallResult(false, false);
             }
-            Console.WriteLine();
 
             // Console.WriteLine(vbCrLf & "List of downloaded updates:")
             // For I = 0 To searchResult.Updates.Count - 1
@@ -206,6 +208,7 @@ namespace Patch_Management
             logger.WriteLine("Listing of updates installed and individual installation results:");
 
             bool errorsOccured = false;
+            InstallResult IRS = new InstallResult();
             for (int I = 0, loopTo1 = updateCol.Count - 1; I <= loopTo1; I++)
             {
                 int resultCode = (int)installationResult.GetUpdateResult(I).ResultCode;
@@ -215,6 +218,7 @@ namespace Patch_Management
                 }
                 string ResultStr = ResultCode.GetCodeValue(resultCode);
                 IUpdate update = (IUpdate)updateCol[I];
+                IRS.AddResult(update.Title, ResultStr);
                 logger.WriteLine(I + 1 + "> " + update.Title + ", Result Code: " + ResultStr);
             }
 
@@ -226,6 +230,33 @@ namespace Patch_Management
             return new InstallResult(false, errorsOccured);
         }
 
+        public static void ForceDownload()        
+        {
+            forceDownload = true;
+        }
+
+        static string UserUpdateMessage(bool IncludeDrivers, bool IncludeSoftware, bool IncludePreview)
+        {
+            var sb = new StringBuilder("Searching for updates to ");
+            if (IncludeDrivers && IncludeSoftware)
+            {
+                sb.Append("drivers and windows.");
+            }
+            else if (IncludeDrivers)
+            {
+                sb.Append("drivers.");
+            }
+            else if (IncludeSoftware)
+            {
+                sb.Append("windows.");
+            }
+
+            if (!IncludePreview)
+            {
+                sb.Append(" (Excluding preview updates)");
+            }
+            return sb.ToString();
+        }
 
 
     } //end of class.

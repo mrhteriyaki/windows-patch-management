@@ -13,7 +13,7 @@ namespace PatchInstaller
         static bool InstallErrorsOccured = false;
         public static int Main(string[] args)
         {
-
+            
             try
             {
                 if (args.Count() == 0)
@@ -28,14 +28,16 @@ namespace PatchInstaller
                 bool RebootApproved = false;
                 bool SoftwareUpdates = false;
                 bool PreviewUpdates = false;
+                bool DownloadOnly = false;
                 bool scriptMode = false;
+                               
 
                 //Arguments that can be combined.
                 foreach (string arg in args)
                 {
                     //single commands run and execute.
 
-                    if (arg.Equals("?") | arg.ToLower().Equals("help"))
+                    if (arg.Equals("?") || arg.ToLower().Equals("help"))
                     {
                         Help();
                         return 0;
@@ -80,6 +82,14 @@ namespace PatchInstaller
                     {
                         PreviewUpdates = true;
                     }
+                    else if (arg.Equals("-download"))
+                    {
+                        DownloadOnly = true;
+                    }
+                    else if (arg.Equals("-redownload"))
+                    {
+                        WindowsPatchManagement.ForceDownload();
+                    }
                     else if (arg.Equals("-script"))
                     {
                         scriptMode = true;
@@ -104,9 +114,10 @@ namespace PatchInstaller
 
                 if (SoftwareUpdates || DriverInstall)
                 {
-                    InstallResult IR = InstallUpdates(DriverInstall, SoftwareUpdates, PreviewUpdates, scriptMode);
+                    InstallResult IR = InstallUpdates(DriverInstall, SoftwareUpdates, PreviewUpdates, DownloadOnly, scriptMode);
                     InstallErrorsOccured = IR.errorsOccured;
-                    if(InstallErrorsOccured)
+                    ClientReporting.RunReporting(IR.resultList);
+                    if (InstallErrorsOccured)
                     {
                         Console.WriteLine("Errors occured in the installation process.");
                     }
@@ -171,6 +182,8 @@ namespace PatchInstaller
             Console.WriteLine("-preview     Include Preview Updates.");
             Console.WriteLine("-reboot      Reboot if required when updates completed.");
             Console.WriteLine("-select x    Install single update where X is the index number available in the 'check' list.");
+            Console.WriteLine("-download    Only download, skip install.");
+            Console.WriteLine("-redownload  Force re-download of any updates already downloaded.");
             Console.WriteLine("-script      Reduced status info in console output for remote script execution.");
 
             Console.WriteLine();
