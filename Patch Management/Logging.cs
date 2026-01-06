@@ -10,9 +10,15 @@ namespace PatchInstaller
     public class Logging
     {
         string _filename;
+        static readonly string logDir = "C:\\ProgramData\\MRHPatchManagement\\";
         public Logging()
         {
-            _filename = @"C:\Windows\Temp\PatchManagement-" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + ".log";
+            if(!Directory.Exists(logDir))
+            {
+                Directory.CreateDirectory(logDir);
+            }
+
+            _filename = $"{logDir}PatchManagement-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.log";
             Console.WriteLine("Log file at: " + _filename);
             StreamWriter sw = new StreamWriter(_filename);
             sw.WriteLine("MRH Patch Management - Started");
@@ -22,7 +28,7 @@ namespace PatchInstaller
 
         public void WriteLine(string Message)
         {
-            string logline = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ": " + Message;
+            string logline = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}: {Message}";
             Console.WriteLine(logline);
             StreamWriter sw = new StreamWriter(_filename,true);
             sw.WriteLine(logline);
